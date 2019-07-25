@@ -1,9 +1,17 @@
 package com.chryl.config;
 
+import com.chryl.cache.MyRedisCacheManager;
+import com.chryl.cache.RedisCache;
 import com.chryl.realm.MyShiroRealm;
+import com.chryl.session.ConsumerSessionManager;
+import com.chryl.session.MyRedisSessionDao;
+import org.apache.shiro.session.mgt.DefaultSessionManager;
 import org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
+import org.apache.shiro.web.mgt.CookieRememberMeManager;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
+import org.apache.shiro.web.servlet.SimpleCookie;
+import org.apache.shiro.web.session.mgt.DefaultWebSessionManager;
 import org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
@@ -67,9 +75,18 @@ public class ShiroConfig {
 
     //创建SecurityManager类的注入bean
     @Bean(name = "securityManager")
-    public DefaultWebSecurityManager getDefaultWebSecurityManager(@Qualifier("shiroRealm") MyShiroRealm shiroRealm) {
+    public DefaultWebSecurityManager getDefaultWebSecurityManager(@Qualifier("shiroRealm") MyShiroRealm shiroRealm,
+                                                                  @Qualifier("sessionManager") ConsumerSessionManager sessionManager,
+                                                                  @Qualifier("cacheManager") MyRedisCacheManager cacheManager,
+                                                                  @Qualifier("cookieRememberMe") CookieRememberMeManager cookieRememberMe) {
         DefaultWebSecurityManager securityManager = new DefaultWebSecurityManager();
         securityManager.setRealm(shiroRealm);
+        //session
+        securityManager.setSessionManager(sessionManager);
+        //缓存
+        securityManager.setCacheManager(cacheManager);
+        //记住我
+        securityManager.setRememberMeManager(cookieRememberMe);
         return securityManager;
     }
 
@@ -102,5 +119,40 @@ public class ShiroConfig {
         authorizationAttributeSourceAdvisor.setSecurityManager(securityManager);
         return authorizationAttributeSourceAdvisor;
     }
+
+    //////////////////////
+//    @Bean(name = "sessionManager")
+//    public DefaultWebSessionManager securityManager(@Qualifier("myRedisSessionDao") MyRedisSessionDao myRedisSessionDao) {
+//        DefaultWebSessionManager defaultWebSessionManager = new DefaultWebSessionManager();
+//        defaultWebSessionManager.setSessionDAO(myRedisSessionDao);
+//        return defaultWebSessionManager;
+//    }
+
+    //session自管理
+    //自定义sessionManager
+    @Bean(name = "sessionManager")
+    public ConsumerSessionManager securityManager(@Qualifier("myRedisSessionDao") MyRedisSessionDao myRedisSessionDao) {
+        ConsumerSessionManager consumerSessionManager = new ConsumerSessionManager();
+        consumerSessionManager.setSessionDAO(myRedisSessionDao);
+        return consumerSessionManager;
+    }
+
+    //缓存
+    @Bean(name = "cacheManager")
+    public MyRedisCacheManager myRedisCacheManager() {
+        return new MyRedisCacheManager();
+    }
+
+
+    //记住我登录
+    @Bean(name = "cookieRememberMe")
+    public CookieRememberMeManager cookieRememberMeManager() {
+        SimpleCookie simpleCookie = new SimpleCookie("rememberMe");
+        simpleCookie.setMaxAge(6000);//存活时间,单位s
+        CookieRememberMeManager cookieRememberMeManager = new CookieRememberMeManager();
+        cookieRememberMeManager.setCookie(simpleCookie);
+        return cookieRememberMeManager;
+    }
+
 
 }

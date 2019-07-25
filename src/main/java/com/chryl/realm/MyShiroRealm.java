@@ -6,6 +6,7 @@ import com.chryl.mapper.GmUserMapper;
 import com.chryl.po.GmFunction;
 import com.chryl.po.GmRole;
 import com.chryl.po.GmUser;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
@@ -23,6 +24,7 @@ import java.util.List;
 /**
  * Created By Chr on 2019/7/23.
  */
+@Slf4j
 public class MyShiroRealm extends AuthorizingRealm {
 
     @Resource
@@ -61,8 +63,9 @@ public class MyShiroRealm extends AuthorizingRealm {
         authorizationInfo.addStringPermissions(perms); //把用户的所有权限类别添加到对象中
         authorizationInfo.addRoles(roles); //把所有的用户角色添加到对象中
 
-        System.out.println(perms);
-        System.out.println(roles);
+        //这是从数据库获取的数据
+        log.info("从数据库获取的数据:{}",perms);
+        log.info("从数据库获取的数据:{}",roles);
 
 
         return authorizationInfo;

@@ -27,13 +27,21 @@ public class UserController {
     private GmUserMapper gmUserMapper;
 
     @PostMapping("/login")
-    public Object login(@RequestParam String username, @RequestParam String password) {
+    public Object login(@RequestParam String username,//
+                        @RequestParam String password,//
+                        @RequestParam boolean rememberMe) {
         // 进行登录验证
         Subject subject = SecurityUtils.getSubject();
         // 创建验证用的令牌对象
         UsernamePasswordToken token = new UsernamePasswordToken(username, password);
         JSONObject jsonObject = new JSONObject();
         try {
+            ///###
+            /**
+             * 设置为true,则下次登录就直接登录,但是该true一般为前端传递的checkBox
+             */
+            token.setRememberMe(rememberMe);
+            ///###
             subject.login(token);
             boolean flag = subject.isAuthenticated();
             if (flag) {
